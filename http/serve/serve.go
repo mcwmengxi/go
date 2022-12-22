@@ -5,13 +5,15 @@ import (
 	"net/http"
 )
 
-func main()  {
-	http.HandleFunc("/test", handle)
-	
-	log.Fatal(http.ListenAndServe(":8080", nil))
+func main() {
+	// ServeMux 和 Handler
+	mux := http.NewServeMux()
+	mux.HandleFunc("/test", handle)
+	log.Println("Listening...")
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
 
-func handle(res http.ResponseWriter, req *http.Request){
+func handle(res http.ResponseWriter, req *http.Request) {
 	req.Header.Add("If-None-Match", `W/"wyzzy"`)
-	res.Write([]byte ("server response!"))
+	res.Write([]byte("server response!"))
 }
