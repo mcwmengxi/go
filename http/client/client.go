@@ -15,9 +15,11 @@ func main() {
 		DisableCompression: true,
 	}
 	client := &http.Client{Transport: tr}
-	res, _ := client.Get("http://localhost:8080/test")
+	res1, _ := client.Get("http://localhost:8080/test")
+	res, _ := client.Get("http://localhost:8080/time")
 	// 客户端必须在完成响应正文后关闭响应正文
 	defer res.Body.Close()
+	defer res1.Body.Close()
 	headers := res.Header
 	for k, v := range headers {
 		fmt.Printf("k=%v, v=%v\n", k, v)
@@ -34,4 +36,5 @@ func main() {
 	fmt.Printf("res Uncompressed %t\n", res.Uncompressed)
 	b, _ := io.ReadAll(res.Body)
 	fmt.Println("res", res.Status, string(b))
+	fmt.Println("res1 header", res1.Header)
 }
