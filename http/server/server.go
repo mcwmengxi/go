@@ -21,6 +21,8 @@ func (timeHandle timeHandle) ServeHttp(res http.ResponseWriter, req *http.Reques
 }
 
 func main() {
+	// go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	// go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 	// ServeMux 和 Handler
 	mux := http.NewServeMux()
 	// mux.HandleFunc("/test", handle)
