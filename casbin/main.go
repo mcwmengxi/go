@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/casbin/casbin"
+	"github.com/casbin/casbin/v2"
+	"github.com/casbin/casbin/v2/model"
 	gormadapter "github.com/casbin/gorm-adapter/v3"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -43,21 +44,41 @@ func init() {
 }
 func main() {
 	adapter, err := gormadapter.NewAdapterByDB(handler)
-	e := casbin.NewEnforcer("./model.conf", adapter)
+	const text = `[request_definition]
+	r = sub, obj, act
+	
+	[policy_definition]
+	p = sub, obj, act
+	
+	[role_definition]
+	g = _, _
+	
+	[policy_effect]
+	e = some(where (p.eft == allow))
+	
+	[matchers]
+	m = r.sub == p.sub && keyMatch2(r.obj,p.obj) && r.act == p.act`
+	m, err := model.NewModelFromString(text)
+	if err != nil {
+		log.Println(err, 23)
+	} else {
+		fmt.Println(adapter, m, 34)
+	}
+	e, err := casbin.NewEnforcer(m, adapter)
 	if err != nil {
 		log.Println(err, 23)
 	} else {
 		fmt.Println(adapter, e, 34)
 	}
+	// e.LoadPolicy()
 
-	sub := "alice"                                 // 想要访问资源的用户。
-	obj := "data1"                                 // 将被访问的资源。
-	act := "read"                                  // 用户对资源执行的操作。
-	added := e.AddPolicy("alice", "data1", "read") // 给数据库添加数据
-	fmt.Println(added)                             // 第一次添加成功就为true，第二次就为false，因为已经存在了这个数据
+	sub := "alice"                                      // 想要访问资源的用户。
+	obj := "data1"                                      // 将被访问的资源。
+	act := "read"                                       // 用户对资源执行的操作。
+	added, err := e.AddPolicy("alice", "data1", "read") // 给数据库添加数据
+	fmt.Println(added)                                  // 第一次添加成功就为true，第二次就为false，因为已经存在了这个数据
 
-	ok := e.Enforce(sub, obj, act)
-	e.LoadPolicy()
+	ok, err := e.Enforce(sub, obj, act)
 	if ok == true {
 		// 允许alice读取data1
 		fmt.Println("access")
