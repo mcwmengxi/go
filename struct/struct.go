@@ -1,4 +1,4 @@
-package main
+package structdemo
 
 import (
 	"encoding/json"
