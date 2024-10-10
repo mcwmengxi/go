@@ -1,0 +1,11 @@
+  syntax = "proto3";
+  
+  option go_package = "/person";
+
+  package pb;
+  
+  message Person {
+   string name = 1;
+   uint32 age = 2;
+   repeated string hobbies = 3;
+  }
