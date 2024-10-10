@@ -8,6 +8,12 @@ import (
 	"time"
 )
 
+var (
+	counter int
+	mutex   sync.Mutex
+)
+
+
 func TestSyncDemo(t *testing.T) {
 	OnceD()
 	OnceD()
@@ -37,4 +43,27 @@ func TestWaitGroup(t *testing.T) {
 	}
 	wg.Wait()
 	fmt.Println("Done!")
+}
+
+
+func TestMutex(t *testing.T) {
+	var wg sync.WaitGroup
+
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			incrementCounter()
+		}()
+	}
+
+	wg.Wait()
+	fmt.Println("Counter:", counter)
+}
+
+func incrementCounter() {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	counter++
 }
