@@ -7,6 +7,7 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
 	gormadapter "github.com/casbin/gorm-adapter/v3"
+	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -33,17 +34,17 @@ func init() {
 			SingularTable: true,
 		},
 		// 日志
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logger.Error),
+
 	})
 	handler = db
 	if err != nil {
 		log.Println(err)
-	} else {
-		fmt.Println(db, 123)
 	}
 }
-func main() {
-	adapter, err := gormadapter.NewAdapterByDB(handler)
+
+func sqlPolicy() {
+	adapter, _ := gormadapter.NewAdapterByDB(handler)
 	const text = `[request_definition]
 	r = sub, obj, act
 	
@@ -57,34 +58,57 @@ func main() {
 	e = some(where (p.eft == allow))
 	
 	[matchers]
-	m = r.sub == p.sub && keyMatch2(r.obj,p.obj) && r.act == p.act`
+	m = g(r.sub, p.sub) && r.obj == p.obj && r.act == p.act`
 	m, err := model.NewModelFromString(text)
+	// m, err := model.NewModelFromFile("./.model.conf")
 	if err != nil {
-		log.Println(err, 23)
-	} else {
-		fmt.Println(adapter, m, 34)
+		zap.L().Error("字符串加载模型失败!", zap.Error(err))
 	}
-	e, err := casbin.NewEnforcer(m, adapter)
+	e, _ := casbin.NewCachedEnforcer(m, adapter)
+	e.SetExpireTime(60*60)
+	e.LoadPolicy()
+
+	// sub := "alice"                                      // 想要访问资源的用户。
+	// obj := "data1"                                      // 将被访问的资源。
+	// act := "read"                                       // 用户对资源执行的操作。
+	// added, err := e.AddPolicy("alice", "data1", "read") // 给数据库添加数据
+	// fmt.Println(added)                                  // 第一次添加成功就为true，第二次就为false，因为已经存在了这个数据
+	// check(e, sub, obj, act)
+	e.AddPolicy("admin", "/api/users", "GET")
+	e.AddRoleForUser("zhangsan", "admin")
+	check(e, "zhangsan", "/api/users", "GET")
+	e.RemoveGroupingPolicy("zhangsan", "admin")
+	e.RemovePolicy("admin", "/api/users", "GET")
+	check(e, "zhangsan", "/api/users", "GET")
+	e.SavePolicy()
+	check(e, "zhangsan", "/api/users", "GET")
+}
+
+func check(e *casbin.CachedEnforcer, sub, obj, act string) {
+  ok, _ := e.Enforce(sub, obj, act)
+  if ok {
+    fmt.Printf("%s CAN %s %s\n", sub, act, obj)
+  } else {
+    fmt.Printf("%s CANNOT %s %s\n", sub, act, obj)
+  }
+}
+
+func filePolicy() {
+	enforcer, err := casbin.NewCachedEnforcer("./model.pml", "./policy.csv")
 	if err != nil {
-		log.Println(err, 23)
-	} else {
-		fmt.Println(adapter, e, 34)
-	}
-	// e.LoadPolicy()
-
-	sub := "alice"                                      // 想要访问资源的用户。
-	obj := "data1"                                      // 将被访问的资源。
-	act := "read"                                       // 用户对资源执行的操作。
-	added, err := e.AddPolicy("alice", "data1", "read") // 给数据库添加数据
-	fmt.Println(added)                                  // 第一次添加成功就为true，第二次就为false，因为已经存在了这个数据
-
-	ok, err := e.Enforce(sub, obj, act)
-	if ok == true {
-		// 允许alice读取data1
-		fmt.Println("access")
-	} else {
-		// 拒绝请求，抛出异常
-		fmt.Println("not access")
+		zap.L().Error("new enforcer failed", zap.Error(err))
 	}
 
+	check(enforcer, "zhangsan", "/index", "POST")
+	check(enforcer, "zhangsan", "/home", "GET")
+  check(enforcer, "zhangsan", "/users", "POST")
+  check(enforcer, "wangwu", "/users", "POST")
+	enforcer.AddPolicy("wangwu", "/users", "POST")
+	enforcer.SavePolicy()
+	enforcer.RemovePolicy("wangwu", "/users", "POST")
+	enforcer.SavePolicy()
+  check(enforcer, "wangwu", "/users", "POST")
+}
+func main() {
+	sqlPolicy()
 }
