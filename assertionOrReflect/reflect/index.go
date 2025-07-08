@@ -19,6 +19,7 @@ func (p Person) Create(val string){
 	fmt.Println(val, "无限创造" )
 } 
 func ReflectFunc(){
+	
 	ani := Animial{
 		Name: "dog",
 		Owner: "empty",
@@ -28,6 +29,7 @@ func ReflectFunc(){
 		tag: "yys",
 		Animial: ani,
 	}
+	fmt.Println(StructToMap(p))
 	is(p)
 // 	普通反射
 
@@ -41,7 +43,7 @@ func ReflectFunc(){
 func is(v interface{}){
 	t := reflect.TypeOf(v)
 	val := reflect.ValueOf(v)
-	fmt.Println("reflect.typeOf", t,val)
+	fmt.Println("reflect.typeOf", t,val, t.Kind())
 	// for i:=0;i< t.NumField();i++  {
 	// 	fmt.Println(val.Field(i))
 	// }
