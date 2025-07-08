@@ -4,6 +4,9 @@ import "github.com/gin-gonic/gin"
 
 func RegisterHTTPServer(uc *UserUseCase) *gin.Engine {
 	r := gin.Default()
-	r.Any("/register", uc.Register)
+	rootGrp := r.Group("/api")
+	{
+		rootGrp.GET("/", uc.Register)
+	}
 	return r
 }

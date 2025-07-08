@@ -1,7 +1,7 @@
 package server
 
 import (
-	v1 "github.com/mcwmengxi/go/kratos-learn/urlshorter/api/user/v1"
+	// v1 "github.com/mcwmengxi/go/kratos-learn/urlshorter/api/user/v1"
 	"github.com/mcwmengxi/go/kratos-learn/urlshorter/internal/conf"
 	"github.com/mcwmengxi/go/kratos-learn/urlshorter/internal/interfaces"
 	"github.com/mcwmengxi/go/kratos-learn/urlshorter/internal/service"
@@ -28,8 +28,8 @@ func NewHTTPServer(c *conf.Server,userRouter *interfaces.UserUseCase, user *serv
 		opts = append(opts, http.Timeout(c.Http.Timeout.AsDuration()))
 	}
 	srv := http.NewServer(opts...)
-	// srv.HandlePrefix("/v1/user", interfaces.RegisterHTTPServer(userRouter))
+	srv.HandlePrefix("/", interfaces.RegisterHTTPServer(userRouter))
 	// v1.RegisterGreeterHTTPServer(srv, greeter)
-	v1.RegisterUserHTTPServer(srv, user)
+	// v1.RegisterUserHTTPServer(srv, user)
 	return srv
 }
